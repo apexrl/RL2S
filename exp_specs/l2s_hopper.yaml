@@ -1,0 +1,77 @@
+meta_data:
+  script_path: run_scripts/l2s_exp_script_mujoco.py
+  exp_name: RL2S
+  description: L2S hopper
+  num_workers: 12 # 64
+  num_gpu_per_worker: 1 # 1 
+  num_cpu_per_worker: 4 # 2
+  mem_per_worker: 10gb
+  partitions: cpu
+  node_exclusions: gpu048,gpu024,gpu025,gpu012,gpu027
+# -----------------------------------------------------------------------------
+variables:
+  seed: [9999]
+# -----------------------------------------------------------------------------
+constants:
+  expert_name: 'Hopper'
+  buffer_limit: 300
+  disc_use_sn: true
+
+  disc_num_blocks: 4
+  disc_hid_dim: 512
+  disc_hid_act: relu
+  disc_if_clamp: false
+  disc_clamp_magnitude: 10.0
+
+  policy_net_size: 512
+  policy_num_hidden_layers: 4
+  
+  bandit_params:
+    policy_lr: 0.0001
+    reward_scale: 5.0
+    beta_1: 0.9
+
+  l2s_params:
+    mode: 'gail'
+
+    disc_optim_batch_size: 256 #256
+    disc_l2_coef: 0.0
+    disc_momentum: 0.5
+
+    policy_optim_batch_size: 256
+    replay_buffer_size: 1000
+    if_normalize_dataset: true
+    if_set_state: true #environment begin at a true state instead of reseting
+
+    batch_freq: 20
+    use_robust: true
+    use_delta: false
+    gamma: 0.999 # used in compute value discrepancy
+
+    num_epochs: 1620000
+    num_update_loops_per_train_call: 50
+    num_disc_updates_per_loop_iter: 5
+    num_policy_updates_per_loop_iter: 1
+    num_steps_per_epoch: 400
+    num_steps_between_train_calls: 50
+    num_steps_per_eval: 2000
+    max_path_length: 1000
+    min_steps_before_training: 260
+
+    env_observation_mean: [ 6.84657484, 1.02411338, 0.0831695, -0.55164485, -0.74738959, -0.09371286, 1.62237406, -0.04963518, 0.02073197, -0.0979013, -0.11239976, -0.02732412 ]
+    env_observation_std: [ 4.82675823, 0.47293847, 0.50263049, 0.70430399, 0.51275484, 0.65485818, 1.11244377, 1.27406441, 1.2982586, 1.76072197, 2.22903456, 5.85081859 ]
+    # env_action_mean: [0.0484465, 0.04688279, -0.26996115]
+    # env_action_std: [0.48600423, 0.44863698, 0.66671354]
+
+    disc_lr: 0.0001
+    best_key: 'test_rwd_diff_max'
+
+    save_best: true
+    freq_saving: 10
+    save_algorithm: false
+
+  env_specs:
+    env_name: 'hopper'
+    env_kwargs: {}
+    eval_env_seed: 78236
+    training_env_seed: 24495

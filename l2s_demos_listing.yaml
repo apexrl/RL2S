@@ -1,0 +1,15 @@
+Hopper:
+  description: "Hopper-v2"
+  base_dir: ./l2s_dataset/hopper/
+  train_data_index: [
+    50,150
+  ]
+  test_data_index: [
+    100,300
+  ]
+  dynamic_dir: ./l2s_dataset/learned_dynamic/hopper/
+  env_buffer_dir: ./l2s_dataset/env_data/hopper.pkl
+  policy_dir: ./l2s_dataset/hopper/test_policy/
+  q_dir: ./l2s_dataset/hopper/test_q/
+
+
