@@ -117,6 +117,27 @@ def normalize_data(raw_data):
         res.append((i-raw_min)/(raw_max-raw_min))
     return res
 
+def generate_data(policy_file_path, save_path, env, traj_nums,max_length, steps_after_done=0, use_sim_mujoco_policy=False,noterminal=False):
+    """
+        generate data for mujoco
+    """
+    print("save_Dir",save_path," policy_dir: ",policy_file_path)
+    env_name = env
+    env_wrapper_dict = {'hopper':HopperWrapper,'halfcheetah':HalfcheetahWrapper,'walker':WalkerWrapper,
+                        'ant':AntWrapper,}
+    env_specs ={"env_name":env,"eval_env_seed":78236,"training_env_seed":24495,"env_kwargs":{}}
+    env = get_env(env_specs)
+    env = env_wrapper_dict[env_name](env)
+    policy = joblib.load(policy_file_path)
+    policy = MakeDeterministic(policy)
+    trajs = []
+    traj_len = []
+    for i in range(traj_nums):
+        traj = rolloutSimMujoco(env,policy,max_length,steps_after_done=steps_after_done,use_sim_mujoco_policy=use_sim_mujoco_policy,no_terminal=noterminal)
+        trajs.append(traj)
+        traj_len.append(len(traj['actions']))
+    joblib.dump(trajs,save_path,compress=3)
+    print("mean length:", np.mean(traj_len))
 
 
 if __name__ == '__main__':
@@ -126,6 +147,9 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dataset', type=str, default="cartpole",help='choose the dataset')
     parser.add_argument('-g', '--gpu', help='gpu id', type=int, default=0)
     parser.add_argument('--id', type=int, default=0,help='choose the data of offline evaluation')
+    parser.add_argument('--no_terminal', help='no terminal', action='store_false',default=True)
+    parser.add_argument('-d', '--dataset', type=str, default="hopper",help='choose the dataset')
+
     args = parser.parse_args()
     target=args.target
     env_name = args.dataset
@@ -197,6 +221,86 @@ if __name__ == '__main__':
                     max_dcg +=tmp
                 ndcg.append(dcg/max_dcg)
             print(j,' ',top_num,' ',ndcg)
+    elif target==2:
+        #env_name = "cartpole" # cartpole,
+        length_dict = {'hopper':1000,'halfcheetah':1000,'walker':1000,'ant':1000}
+        env = env_dict[env_name]
+        use_sim_mujoco_policy = False
+        traj_nums = 10 #
+        max_length= length_dict[env_name]
+        steps_after_terminal = 0
+        if args.no_terminal:
+            base_dir = "./l2s_dataset/%s/"%env_name
+            steps_after_terminal=0
+        
+        #train
+        train_policy = base_dir + "train_policy/"
+        train_data = base_dir + "train_data/"
+        files_list = os.listdir(train_policy)
+        target_list = os.listdir(train_data)
+        for i in files_list:
+            policy_path = i
+            policy_dir = train_policy+policy_path
+            if "dataset_"+i in target_list:
+                continue
+            save_dir = train_data + "dataset_"+i
+            generate_data(policy_dir,save_dir,env,traj_nums,max_length,steps_after_terminal,use_sim_mujoco_policy,noterminal=args.no_terminal)
+
+        #test
+        test_policy = base_dir + "test_policy/"
+        test_data = base_dir + "test_data/"
+        files_list = os.listdir(test_policy)
+        target_list = os.listdir(test_data)
+        for i in files_list:
+            policy_path = i
+            policy_dir = test_policy+policy_path
+            if "dataset_"+i in target_list:
+                continue
+            save_dir = test_data + "dataset_"+i
+            generate_data(policy_dir,save_dir,env,traj_nums,max_length,0,use_sim_mujoco_policy=use_sim_mujoco_policy,noterminal=args.no_terminal)
+        print("generate done")
+    elif target ==3:
+        #compute mean and std
+        env = env_dict[env_name]
+        base_dir = "./l2s_dataset/%s/"%env_name
+        cur_obs = None
+        cur_acts = None
+        cur_length = 0
+        #train
+        train_data = base_dir + "train_data/"
+        files_list = os.listdir(train_data)
+        for i in files_list:
+            if not i.endswith('.pkl'):
+                continue
+            data_path = train_data+i
+            trajs = joblib.load(data_path)
+            for traj in trajs:
+                tmp_obs = np.array(traj["observations"])
+                tmp_acts = np.array(traj["actions"])
+                cur_length +=len(tmp_obs)
+                if cur_obs is None:
+                    cur_obs = tmp_obs
+                    cur_acts = tmp_acts
+                else:
+                    cur_obs = np.concatenate((cur_obs,tmp_obs),axis=0)
+                    cur_acts = np.concatenate((cur_acts,tmp_acts),axis=0)
+        obs_mean = np.mean(cur_obs,axis=0)
+        obs_std = np.std(cur_obs,axis=0)
+        acts_mean = np.mean(cur_acts,axis=0)
+        acts_std = np.std(cur_acts,axis=0)
+        print("obs_mean: ")
+        pprint.pprint(obs_mean)
+        print('-'*30)
+        print("obs_std: ")
+        pprint.pprint(obs_std)
+        print('-'*30)
+        print("acts_mean: ")
+        pprint.pprint(acts_mean)
+        print('-'*30)
+        print("acts_std: ")
+        pprint.pprint(acts_std)
+        print('-'*30)
+        #return obs_mean,obs_std,acts_mean,acts_std
 
                 
 

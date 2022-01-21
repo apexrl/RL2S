@@ -14,7 +14,7 @@ variables:
 # -----------------------------------------------------------------------------
 constants:
   expert_name: 'Hopper'
-  buffer_limit: 300
+  buffer_limit: 1000
   disc_use_sn: true
 
   disc_num_blocks: 4
