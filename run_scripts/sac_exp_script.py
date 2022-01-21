@@ -7,7 +7,6 @@ import pickle,gym
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-parentdir = os.path.dirname(parentdir)
 sys.path.insert(0,parentdir) 
 print(sys.path)
 
@@ -27,7 +26,6 @@ import pickle as pkl
 from rlkit.envs.wrappers import ScaledEnv
 from rlkit.launchers import sac_config as config
 import torch
-from rlkit.torch.l2s.customized_env.pendulum import PendulumWrapper
 #from rlkit.torch.l2s.customized_env.hopper import HopperWrapperSim
 
 

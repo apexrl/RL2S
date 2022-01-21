@@ -133,7 +133,7 @@ def generate_data(policy_file_path, save_path, env, traj_nums,max_length, steps_
     trajs = []
     traj_len = []
     for i in range(traj_nums):
-        traj = rolloutSimMujoco(env,policy,max_length,steps_after_done=steps_after_done,use_sim_mujoco_policy=use_sim_mujoco_policy,no_terminal=noterminal)
+        traj = rolloutSimMujoco(env,policy,max_length,steps_after_done=steps_after_done,no_terminal=noterminal)
         trajs.append(traj)
         traj_len.append(len(traj['actions']))
     joblib.dump(trajs,save_path,compress=3)
@@ -144,7 +144,6 @@ if __name__ == '__main__':
     # Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--target', type=int, default=0,help='choose the util')
-    parser.add_argument('-d', '--dataset', type=str, default="cartpole",help='choose the dataset')
     parser.add_argument('-g', '--gpu', help='gpu id', type=int, default=0)
     parser.add_argument('--id', type=int, default=0,help='choose the data of offline evaluation')
     parser.add_argument('--no_terminal', help='no terminal', action='store_false',default=True)
@@ -222,7 +221,6 @@ if __name__ == '__main__':
                 ndcg.append(dcg/max_dcg)
             print(j,' ',top_num,' ',ndcg)
     elif target==2:
-        #env_name = "cartpole" # cartpole,
         length_dict = {'hopper':1000,'halfcheetah':1000,'walker':1000,'ant':1000}
         env = env_dict[env_name]
         use_sim_mujoco_policy = False
